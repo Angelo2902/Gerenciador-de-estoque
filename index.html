@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Gerenciador de Estoque</title>
+
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#f5f5f5;
+margin:0;
+padding:15px;
+}
+
+h1{
+text-align:center;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:8px;
+margin-bottom:8px;
+box-sizing:border-box;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+margin:3px;
+}
+
+.salvar{
+background:#28a745;
+color:white;
+width:100%;
+}
+
+.lista{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+gap:15px;
+}
+
+.produto{
+background:white;
+padding:10px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+.produto img{
+width:100%;
+height:180px;
+object-fit:cover;
+border-radius:8px;
+}
+
+.baixo{
+color:red;
+font-weight:bold;
+}
+
+.editar{
+background:#2196f3;
+color:white;
+}
+
+.excluir{
+background:#d32f2f;
+color:white;
+}
+
+@media(max-width:600px){
+
+.produto img{
+height:150px;
+}
+
+}
+</style>
+
+</head>
+<body>
+
+<h1>📦 Gerenciador de Estoque</h1>
+
+<div class="card">
+
+<input id="nome" placeholder="Nome do produto">
+
+<input id="preco" type="number" step="0.01" placeholder="Preço">
+
+<input id="quantidade" type="number" placeholder="Quantidade">
+
+<input id="foto" type="file" accept="image/*">
+
+<button class="salvar" onclick="salvarProduto()">Salvar Produto</button>
+
+</div>
+
+<div class="card">
+
+<input id="pesquisa" placeholder="Pesquisar..." onkeyup="listar()">
+
+</div>
+
+<div class="lista" id="lista"></div>
+
+<script>
+
+let produtos=JSON.parse(localStorage.getItem("estoque"))||[];
+
+let editando=-1;
+
+function salvarProduto(){
+
+let nome=document.getElementById("nome").value;
+
+let preco=document.getElementById("preco").value;
+
+let quantidade=document.getElementById("quantidade").value;
+
+let foto=document.getElementById("foto");
+
+if(nome=="") return alert("Digite o nome.");
+
+if(preco=="") return alert("Digite o preço.");
+
+if(quantidade=="") return alert("Digite a quantidade.");
+
+if(foto.files[0]){
+
+let leitor=new FileReader();
+
+leitor.onload=function(){
+
+gravar(leitor.result);
+
+}
+
+leitor.readAsDataURL(foto.files[0]);
+
+}else{
+
+gravar(editando==-1?"":produtos[editando].foto);
+
+}
+
+}
+
+function gravar(imagem){
+
+let produto={
+
+nome:document.getElementById("nome").value,
+
+preco:document.getElementById("preco").value,
+
+quantidade:document.getElementById("quantidade").value,
+
+foto:imagem
+
+};
+
+if(editando==-1){
+
+produtos.push(produto);
+
+}else{
+
+produtos[editando]=produto;
+
+editando=-1;
+
+}
+
+localStorage.setItem("estoque",JSON.stringify(produtos));
+
+limpar();
+
+listar();
+
+}
+
+function listar(){
+
+let busca=document.getElementById("pesquisa").value.toLowerCase();
+
+let html="";
+
+produtos.forEach((p,i)=>{
+
+if(!p.nome.toLowerCase().includes(busca)) return;
+
+html+=`
+
+<div class="produto">
+
+<img src="${p.foto}">
+
+<h3>${p.nome}</h3>
+
+<p>Preço: R$ ${Number(p.preco).toFixed(2)}</p>
+
+<p class="${p.quantidade<=5?'baixo':''}">
+
+Quantidade: ${p.quantidade}
+
+</p>
+
+<button class="editar" onclick="editar(${i})">Editar</button>
+
+<button class="excluir" onclick="excluirProduto(${i})">Excluir</button>
+
+</div>
+
+`;
+
+});
+
+document.getElementById("lista").innerHTML=html;
+
+}
+
+function editar(i){
+
+editando=i;
+
+document.getElementById("nome").value=produtos[i].nome;
+
+document.getElementById("preco").value=produtos[i].preco;
+
+document.getElementById("quantidade").value=produtos[i].quantidade;
+
+window.scrollTo(0,0);
+
+}
+
+function excluirProduto(i){
+
+if(confirm("Excluir produto?")){
+
+produtos.splice(i,1);
+
+localStorage.setItem("estoque",JSON.stringify(produtos));
+
+listar();
+
+}
+
+}
+
+function limpar(){
+
+document.getElementById("nome").value="";
+
+document.getElementById("preco").value="";
+
+document.getElementById("quantidade").value="";
+
+document.getElementById("foto").value="";
+
+}
+
+listar();
+
+</script>
+
+</body>
+</html>
